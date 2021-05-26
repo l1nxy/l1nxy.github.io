@@ -20,20 +20,22 @@
     var CONFIG = {"hostname":"l1nxy.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="主要还是Typecho要主机费，现在拿着一个VPS也没啥用，就迁移到Hexo好了。之后慢慢写博客吧，还是要点产出的。">
+  <meta name="description" content="According to the risc-v specificaion, if the PMP register are not configured correctlly, any instruction should fail.Previouse qemu is not check the PMP register for the risc-v, but this qemu commit a">
 <meta property="og:type" content="article">
-<meta property="og:title" content="一些改变">
-<meta property="og:url" content="http://l1nxy.me/2020/05/02/change-something/index.html">
+<meta property="og:title" content="Fix xv6 code can not boot on newest qemu">
+<meta property="og:url" content="http://l1nxy.me/2021/05/26/fix-xv6-boot/index.html">
 <meta property="og:site_name" content="L1nxy&#39;s Blog">
-<meta property="og:description" content="主要还是Typecho要主机费，现在拿着一个VPS也没啥用，就迁移到Hexo好了。之后慢慢写博客吧，还是要点产出的。">
+<meta property="og:description" content="According to the risc-v specificaion, if the PMP register are not configured correctlly, any instruction should fail.Previouse qemu is not check the PMP register for the risc-v, but this qemu commit a">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-05-02T07:02:20.000Z">
-<meta property="article:modified_time" content="2020-05-02T07:48:44.450Z">
+<meta property="article:published_time" content="2021-05-26T14:41:32.000Z">
+<meta property="article:modified_time" content="2021-05-26T14:47:34.381Z">
 <meta property="article:author" content="L1nxy">
-<meta property="article:tag" content="C++&amp;&amp;Rust，Distribution System">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="xv6">
+<meta property="article:tag" content="qemu">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://l1nxy.me/2020/05/02/change-something/">
+<link rel="canonical" href="http://l1nxy.me/2021/05/26/fix-xv6-boot/">
 
 
 <script id="page-configurations">
@@ -46,7 +48,7 @@
   };
 </script>
 
-  <title>一些改变 | L1nxy's Blog</title>
+  <title>Fix xv6 code can not boot on newest qemu | L1nxy's Blog</title>
   
 
 
@@ -167,7 +169,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://l1nxy.me/2020/05/02/change-something/">
+    <link itemprop="mainEntityOfPage" href="http://l1nxy.me/2021/05/26/fix-xv6-boot/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://s.gravatar.com/avatar/87b5fc4f2aff3327c799306d001e0441?s=80">
@@ -180,7 +182,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          一些改变
+          Fix xv6 code can not boot on newest qemu
         </h1>
 
         <div class="post-meta">
@@ -191,7 +193,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-05-02 15:02:20 / Modified: 15:48:44" itemprop="dateCreated datePublished" datetime="2020-05-02T15:02:20+08:00">2020-05-02</time>
+              <time title="Created: 2021-05-26 22:41:32 / Modified: 22:47:34" itemprop="dateCreated datePublished" datetime="2021-05-26T22:41:32+08:00">2021-05-26</time>
             </span>
 
           
@@ -207,14 +209,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>58</span>
+              <span>1.8k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>1 mins.</span>
+              <span>2 mins.</span>
             </span>
 
         </div>
@@ -226,7 +228,14 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>主要还是Typecho要主机费，现在拿着一个VPS也没啥用，就迁移到Hexo好了。<br>之后慢慢写博客吧，还是要点产出的。</p>
+        <p>According to the risc-v specificaion, if the PMP register are not configured correctlly, any instruction should fail.<br>Previouse qemu is not check the PMP register for the risc-v, but this <a href="https://github.com/qemu/qemu/commit/d102f19a208" target="_blank" rel="noopener">qemu commit</a> add the PMP register check ,but xv6 is not set the PMP register for qemu, and It stucked on boot.<br>So we need set the PMP register when OS boot.<br>We need add code in <code>risv.h</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// physical memory protection CSRs</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PMP_R (1L &lt;&lt; 0)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PMP_W (1L &lt;&lt; 1)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PMP_X (1L &lt;&lt; 2)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// naturally aligned power of two</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PM_MATCH\_NAPOT (3L &lt;&lt; 3)</span></span><br><span class="line"></span><br><span class="line">  </span><br><span class="line"></span><br><span class="line"><span class="comment">// we only implement accessing one PMP register</span></span><br><span class="line"></span><br><span class="line">  </span><br><span class="line"></span><br><span class="line"><span class="comment">// write to the first 8 PMP configuration registers</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span></span><br><span class="line"></span><br><span class="line">w_pmpcfg0(uint64 x)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">asm</span> <span class="title">volatile</span><span class="params">(<span class="string">"csrw pmpcfg0, %0"</span> : : <span class="string">"r"</span> (x))</span></span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">  </span><br><span class="line"></span><br><span class="line"><span class="comment">// write to the address for PMP region 0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span></span><br><span class="line"></span><br><span class="line">w_pmpaddr0(uint64 x)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">asm</span> <span class="title">volatile</span><span class="params">(<span class="string">"csrw pmpaddr0, %0"</span> : : <span class="string">"r"</span> (x))</span></span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Then add this code in start.c:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// configures the pmp registers trivially so we can boot. it is not permitted</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// to jump to S mode without having these configured as instruction fetch will</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// fail, however we do not actually use them for protection in xv6, so we just</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// need to put something trivial there.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// see section 3.6.1 "Physical Memory Protection CSRs" in the RISC-V privileged</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// specification (v20190608)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// "If no PMP entry matches an M-mode access, the access succeeds. If no PMP</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// entry matches an S-mode or U-mode access, but at least one PMP entry is</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// implemented, the access fails." (3.6.1)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line"></span><br><span class="line">pmpinit()</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// see figure 3.27 "PMP address register format, RV64" and table 3.10 "NAPOT</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// range encoding in PMP address and configuration registers" in the RISC-V</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// privileged specification</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// we set the bits such that this matches any 56-bit physical address</span></span><br><span class="line"></span><br><span class="line">w_pmpaddr0((~<span class="number">0L</span>) &gt;&gt; <span class="number">10</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// then we allow the access</span></span><br><span class="line"></span><br><span class="line">w_pmpcfg0(PMP_R | PMP_W | PMP_X | PMP_MATCH_NAPOT);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>And we use <code>pmpinit()</code> in <code>start.c</code> befor jump to main().</p>
+<p>Ref:<br><a href="https://github.com/mit-pdos/xv6-riscv/pull/62" target="_blank" rel="noopener">github</a></p>
 
     </div>
 
@@ -235,17 +244,22 @@
     
 
       <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"># OS</a>
+              <a href="/tags/xv6/" rel="tag"># xv6</a>
+              <a href="/tags/qemu/" rel="tag"># qemu</a>
+          </div>
 
         
 
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2020/05/27/6-828-lab1/" rel="next" title="MIT 6.828 Lab1">
-      MIT 6.828 Lab1 <i class="fa fa-chevron-right"></i>
+    <a href="/2020/07/02/mit-6-824-lab1-mapreduce/" rel="prev" title="MIT 6.824 Lab1 mapreduce">
+      <i class="fa fa-chevron-left"></i> MIT 6.824 Lab1 mapreduce
     </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
