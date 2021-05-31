@@ -20,23 +20,21 @@
     var CONFIG = {"hostname":"l1nxy.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="前言MIT 6.824是著名的分布式课程，课程包含了视频，讲义，与作业。而本篇博文将阐述6.824课程的第一个作业的一些思考与解法，记录一些关于Map Reduce系统的思考。 Map ReduceMap Reduce作为“谷三篇”的第一篇，出名不是没有原因的，jeff dean的超前思想构建了谷歌搜索的基石，使得谷歌在超大应用系统的构建上得心应手。而Map Reduce则是一个基石中的基石。 M">
+  <meta name="description" content="MIT 6.828 Lab3前言本Lab比较简单，重在理解代码，并且作业描述中都给出了解决方式，只要理解了代码，按着描述中的思路去解决即可。 解决第一部分第一部分主要是把buddy malloc应用到files.c里面去，很简单，把filealloc函数里的代码换成bd_malloc的实现即可，注意把bd_free里面要把各种使用的资源释放掉。 12345678910111213&#x2F;&#x2F; Alloca">
 <meta property="og:type" content="article">
-<meta property="og:title" content="MIT 6.824 Lab1 mapreduce">
-<meta property="og:url" content="http://l1nxy.me/2020/07/02/mit-6-824-lab1-mapreduce/index.html">
+<meta property="og:title" content="MIT 6.828 Lab3">
+<meta property="og:url" content="http://l1nxy.me/2020/07/27/mit-6-828-lab3/index.html">
 <meta property="og:site_name" content="L1nxy&#39;s Blog">
-<meta property="og:description" content="前言MIT 6.824是著名的分布式课程，课程包含了视频，讲义，与作业。而本篇博文将阐述6.824课程的第一个作业的一些思考与解法，记录一些关于Map Reduce系统的思考。 Map ReduceMap Reduce作为“谷三篇”的第一篇，出名不是没有原因的，jeff dean的超前思想构建了谷歌搜索的基石，使得谷歌在超大应用系统的构建上得心应手。而Map Reduce则是一个基石中的基石。 M">
+<meta property="og:description" content="MIT 6.828 Lab3前言本Lab比较简单，重在理解代码，并且作业描述中都给出了解决方式，只要理解了代码，按着描述中的思路去解决即可。 解决第一部分第一部分主要是把buddy malloc应用到files.c里面去，很简单，把filealloc函数里的代码换成bd_malloc的实现即可，注意把bd_free里面要把各种使用的资源释放掉。 12345678910111213&#x2F;&#x2F; Alloca">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://l1nxy.me/images/mapreduce.png">
-<meta property="article:published_time" content="2020-07-02T15:05:14.000Z">
-<meta property="article:modified_time" content="2020-07-02T15:48:39.361Z">
+<meta property="article:published_time" content="2020-07-27T14:05:33.000Z">
+<meta property="article:modified_time" content="2021-05-26T14:57:52.991Z">
 <meta property="article:author" content="L1nxy">
-<meta property="article:tag" content="distributed system">
-<meta property="article:tag" content="6.824">
+<meta property="article:tag" content="6.828">
+<meta property="article:tag" content="OS">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://l1nxy.me/images/mapreduce.png">
 
-<link rel="canonical" href="http://l1nxy.me/2020/07/02/mit-6-824-lab1-mapreduce/">
+<link rel="canonical" href="http://l1nxy.me/2020/07/27/mit-6-828-lab3/">
 
 
 <script id="page-configurations">
@@ -49,7 +47,7 @@
   };
 </script>
 
-  <title>MIT 6.824 Lab1 mapreduce | L1nxy's Blog</title>
+  <title>MIT 6.828 Lab3 | L1nxy's Blog</title>
   
 
 
@@ -170,7 +168,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://l1nxy.me/2020/07/02/mit-6-824-lab1-mapreduce/">
+    <link itemprop="mainEntityOfPage" href="http://l1nxy.me/2020/07/27/mit-6-828-lab3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://s.gravatar.com/avatar/87b5fc4f2aff3327c799306d001e0441?s=80">
@@ -183,7 +181,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          MIT 6.824 Lab1 mapreduce
+          MIT 6.828 Lab3
         </h1>
 
         <div class="post-meta">
@@ -192,10 +190,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-07-02 23:05:14 / Modified: 23:48:39" itemprop="dateCreated datePublished" datetime="2020-07-02T23:05:14+08:00">2020-07-02</time>
+              <time title="Created: 2020-07-27 22:05:33" itemprop="dateCreated datePublished" datetime="2020-07-27T22:05:33+08:00">2020-07-27</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-05-26 22:57:52" itemprop="dateModified" datetime="2021-05-26T22:57:52+08:00">2021-05-26</time>
+              </span>
 
           
             <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
@@ -210,14 +214,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>2k</span>
+              <span>1.2k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>2 mins.</span>
+              <span>1 mins.</span>
             </span>
 
         </div>
@@ -229,33 +233,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>MIT 6.824是著名的分布式课程，课程包含了视频，讲义，与作业。而本篇博文将阐述6.824课程的第一个作业的一些思考与解法，记录一些关于Map Reduce系统的思考。</p>
-<h1 id="Map-Reduce"><a href="#Map-Reduce" class="headerlink" title="Map Reduce"></a>Map Reduce</h1><p>Map Reduce作为“谷三篇”的第一篇，出名不是没有原因的，jeff dean的超前思想构建了谷歌搜索的基石，使得谷歌在超大应用系统的构建上得心应手。而Map Reduce则是一个基石中的基石。</p>
-<p>Map Reduce的思想就是分布式的，系统中包含一个Master和许多个Worker，Master负责调度Worker与任务分发，容灾等等，Worker则与Master通信，请求任务。</p>
-<p>而Map Reduce则把一个任务拆分成Map与Reduce部分，简单来说，Map部分是把输入通过用户定义的Map Function输出成中间文件，再把中间文件作为输入给Reduce，Reduce把中间文件调用Reduce Function，然后合并并输出。</p>
-<p><img src="/images/mapreduce.png" alt=""></p>
-<p>整个系统如图所示。如论文所说，这些文件可以是在本地机器上，也可以在分布式文件系统中，这并不影响整个系统框架。</p>
-<p>具体Map Reduce的思想可以读一下Google的论文。</p>
-<h1 id="MIT-6-824-Lab1"><a href="#MIT-6-824-Lab1" class="headerlink" title="MIT 6.824 Lab1"></a>MIT 6.824 Lab1</h1><p>现代的6.824比以前的要难许多，我做过之前的lab1，当时就把Map Reduce的框架都搭好了，只要写两个函数就算通过了。而这个2020的6.824要求对Go熟悉且要把MapReduce整个实现一个大概出来，前后花了不少时间去思考要怎么来做这个实验。</p>
-<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>当我们拿到Lab的时候需要做什么？需要思考我们要实现哪些东西。MIT的代码里只给了几个RPC的函数，然后在这个基础去实现Map Reduce。</p>
-<p>而我们要做的有：</p>
-<ol>
-<li>实现Master管理，这其中需要管理任务的状态，Worker请求任务的处理，Worker任务完成报告的处理，Worker失败超时的处理。</li>
-<li>实现Worker请求任务，对Map部分任务的处理，对Reduce部分任务的处理，还有任务完成的上报。</li>
-<li>还要实现一个文件锁，不能让Goroutine之间产生Race。</li>
-</ol>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>我的一些方案是在Master的结构体里管理两个Channel，当Master启动之后，把任务发给MapChannel，然后在另一个Goroutine里面对这个MapChannel进行读取，Channel如果不设置的话，一方没有读，写方会阻塞住，所以只有Worker进行请求任务之后才会继续生产任务。当Map部分完成后，再启动Reduce部分，生产Reduce任务到ReduceChannel。</p>
-<p>我们在每个请求任务的RPC返回之前再开启一个Goroutine来等待Worker的任务完成报告，这里我们用到了Go的select语法，并使用一个timer，如果超时就把这个任务再次Push进TaskChannel，即使任务失败了，也能再次把任务分发下去。</p>
-<p>对于Worker部分的代码来说，完全就是苦力活，可以看看官方代码里那个非分布式的Worker里代码，可以直接复制过来。Worker如果联系不上Master了，马上退出进程，这样就不用实现一个退出语义了。（其实是我不知道怎么让Master去通知Worker退出）</p>
-<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>这里只给出一些结构体的定义：</p>
-<p><strong>Master:</strong></p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Master <span class="keyword">struct</span> &#123;</span><br><span class="line">	MapTaskList    []*MapTask</span><br><span class="line">	ReduceTaskList []*ReduceTask</span><br><span class="line"></span><br><span class="line">	MapTaskChan    <span class="keyword">chan</span> *MapTask</span><br><span class="line">	ReduceTaskChan <span class="keyword">chan</span> *ReduceTask</span><br><span class="line"></span><br><span class="line">	CompleteMapTaskNum    <span class="keyword">int</span></span><br><span class="line">	CompleteReduceTaskNum <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line">	mu      sync.Mutex</span><br><span class="line">	files   []<span class="keyword">string</span></span><br><span class="line">	nReduce <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+        <h1 id="MIT-6-828-Lab3"><a href="#MIT-6-828-Lab3" class="headerlink" title="MIT 6.828 Lab3"></a>MIT 6.828 Lab3</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本Lab比较简单，重在理解代码，并且作业描述中都给出了解决方式，只要理解了代码，按着描述中的思路去解决即可。</p>
+<h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><h3 id="第一部分"><a href="#第一部分" class="headerlink" title="第一部分"></a>第一部分</h3><p>第一部分主要是把buddy malloc应用到files.c里面去，很简单，把<code>filealloc</code>函数里的代码换成<code>bd_malloc</code>的实现即可，注意把<code>bd_free</code>里面要把各种使用的资源释放掉。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Allocate a file structure.</span></span><br><span class="line"><span class="function">struct file *<span class="title">filealloc</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  acquire(&amp;ftable.lock);</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file</span> *<span class="title">f</span> = <span class="title">bd_malloc</span>(<span class="title">sizeof</span>(<span class="title">struct</span> <span class="title">file</span>));</span></span><br><span class="line">  <span class="keyword">if</span> (f)&#123;</span><br><span class="line">    <span class="built_in">memset</span>(f,<span class="number">0</span>,<span class="keyword">sizeof</span>(struct file));</span><br><span class="line">    f-&gt;ref = <span class="number">1</span>;</span><br><span class="line">    release(&amp;ftable.lock);</span><br><span class="line">    <span class="keyword">return</span> f;</span><br><span class="line">  &#125;</span><br><span class="line">  release(&amp;ftable.lock);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>Task Def</strong></p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> MapTask <span class="keyword">struct</span> &#123;</span><br><span class="line">	TaskNum    <span class="keyword">int</span></span><br><span class="line">	TaskStatus TASK_STATUS</span><br><span class="line">	FileName   <span class="keyword">string</span></span><br><span class="line">	NReduce    <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> ReduceTask <span class="keyword">struct</span> &#123;</span><br><span class="line">	TaskNum    <span class="keyword">int</span></span><br><span class="line">	TaskStatus TASK_STATUS</span><br><span class="line">	FileName   []<span class="keyword">string</span></span><br><span class="line">	NReduce    <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="一些吐槽"><a href="#一些吐槽" class="headerlink" title="一些吐槽"></a>一些吐槽</h2><p>这次写了蛮久了，因为不是很熟悉Go，学了一会才知道有select这种语法，然后官方的hint里让人把中间文件命名为mr-x-y.txt，这样其实挺坑的，因为testmr.sh里面没有把这个中间文件删除掉，而在文件读写的时候因为hash的缘故，不会把所有的文件清空，这样导致前一个test的中间文件会影响到后一个test。所以我加一个函数，把所有的中间文件清空的，这样也算是TDD吧。</p>
-<p>接下来就是要做Lab2了，完成一个Raft。</p>
+
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Close file f.  (Decrement ref count, close when reaches 0.)</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">fileclose</span><span class="params">(struct file *f)</span> </span>&#123;</span><br><span class="line">  acquire(&amp;ftable.lock);</span><br><span class="line">  <span class="keyword">if</span> (f-&gt;ref &lt; <span class="number">1</span>)</span><br><span class="line">    panic(<span class="string">"fileclose"</span>);</span><br><span class="line">  <span class="keyword">if</span> (--f-&gt;ref &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    release(&amp;ftable.lock);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file</span> <span class="title">ff</span> = *<span class="title">f</span>;</span></span><br><span class="line">  f-&gt;ref = <span class="number">0</span>;</span><br><span class="line">  f-&gt;type = FD_NONE;</span><br><span class="line">  release(&amp;ftable.lock);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (ff.type == FD_PIPE) &#123;</span><br><span class="line">    pipeclose(ff.pipe, ff.writable);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (ff.type == FD_INODE || ff.type == FD_DEVICE) &#123;</span><br><span class="line">    begin_op(ff.ip-&gt;dev);</span><br><span class="line">    iput(ff.ip);</span><br><span class="line">    end_op(ff.ip-&gt;dev);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  bd_free(f);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="第二部分"><a href="#第二部分" class="headerlink" title="第二部分"></a>第二部分</h3><p>这部分主要是说把伙伴内存分配器给优化一下，按hint说的是每两个block的分配状态来共享同一个记录位，用异或来做状态转换。这里我们只要把有<code>bit_set</code>与<code>bit_isset</code>换成我们自己写的<code>bit_xor</code>与<code>bit_get</code>就行了。</p>
+<p>特别要注意的是要在xv6有记录meta信息在内存中，然后我们要把除低位与高位之外的没有分配过的block加到free list里去。</p>
+<p>实现：</p>
+<p><a href="https://github.com/l1nxy/mit-6.828/blob/alloc/kernel/buddy.c" target="_blank" rel="noopener">具体实现</a></p>
 
     </div>
 
@@ -265,8 +254,8 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/distributed-system/" rel="tag"># distributed system</a>
-              <a href="/tags/6-824/" rel="tag"># 6.824</a>
+              <a href="/tags/6-828/" rel="tag"># 6.828</a>
+              <a href="/tags/OS/" rel="tag"># OS</a>
           </div>
 
         
@@ -275,12 +264,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/06/21/mit-lab2/" rel="prev" title="MIT 6.828 Lab2">
-      <i class="fa fa-chevron-left"></i> MIT 6.828 Lab2
+    <a href="/2020/07/02/mit-6-824-lab1-mapreduce/" rel="prev" title="MIT 6.824 Lab1 mapreduce">
+      <i class="fa fa-chevron-left"></i> MIT 6.824 Lab1 mapreduce
     </a></div>
       <div class="post-nav-item">
-    <a href="/2020/07/27/mit-6-828-lab3/" rel="next" title="MIT 6.828 Lab3">
-      MIT 6.828 Lab3 <i class="fa fa-chevron-right"></i>
+    <a href="/2020/08/23/i3-with-gnome/" rel="next" title="i3-with-gnome">
+      i3-with-gnome <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -340,7 +329,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Map-Reduce"><span class="nav-number">2.</span> <span class="nav-text">Map Reduce</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MIT-6-824-Lab1"><span class="nav-number">3.</span> <span class="nav-text">MIT 6.824 Lab1</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#思考"><span class="nav-number">3.1.</span> <span class="nav-text">思考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">3.2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码"><span class="nav-number">3.3.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一些吐槽"><span class="nav-number">3.4.</span> <span class="nav-text">一些吐槽</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MIT-6-828-Lab3"><span class="nav-number">1.</span> <span class="nav-text">MIT 6.828 Lab3</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决"><span class="nav-number">1.2.</span> <span class="nav-text">解决</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一部分"><span class="nav-number">1.2.1.</span> <span class="nav-text">第一部分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二部分"><span class="nav-number">1.2.2.</span> <span class="nav-text">第二部分</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"l1nxy.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="raft基础一个raft集群一般来说有5个服务器结点，能让系统承受其中任意两台的down掉。每个服务器一共有三个状态，leader,follower,candidate,follower被动的接受来自candidate与leader的消息并作出回应。leader handle了所有了所有的客户端的请求，如果follower接收到了请求，会重定向到leader那去。  raft把时间分成任意长的阶段">
+<meta property="og:type" content="article">
+<meta property="og:title" content="raft extented论文笔记">
+<meta property="og:url" content="http://l1nxy.me/2020/08/30/raft-notes/index.html">
+<meta property="og:site_name" content="L1nxy&#39;s Blog">
+<meta property="og:description" content="raft基础一个raft集群一般来说有5个服务器结点，能让系统承受其中任意两台的down掉。每个服务器一共有三个状态，leader,follower,candidate,follower被动的接受来自candidate与leader的消息并作出回应。leader handle了所有了所有的客户端的请求，如果follower接收到了请求，会重定向到leader那去。  raft把时间分成任意长的阶段">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://l1nxy.me/images/status.png">
+<meta property="og:image" content="http://l1nxy.me/images/terms.png">
+<meta property="article:published_time" content="2020-08-30T15:05:57.000Z">
+<meta property="article:modified_time" content="2021-05-26T14:57:52.991Z">
+<meta property="article:author" content="L1nxy">
+<meta property="article:tag" content="6.824">
+<meta property="article:tag" content="raft">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://l1nxy.me/images/status.png">
+
+<link rel="canonical" href="http://l1nxy.me/2020/08/30/raft-notes/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>raft extented论文笔记 | L1nxy's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">L1nxy's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">This is a simple blog about tech and life</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://l1nxy.me/2020/08/30/raft-notes/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s.gravatar.com/avatar/87b5fc4f2aff3327c799306d001e0441?s=80">
+      <meta itemprop="name" content="L1nxy">
+      <meta itemprop="description" content="Keep learning">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="L1nxy's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          raft extented论文笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-30 23:05:57" itemprop="dateCreated datePublished" datetime="2020-08-30T23:05:57+08:00">2020-08-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-05-26 22:57:52" itemprop="dateModified" datetime="2021-05-26T22:57:52+08:00">2021-05-26</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>3.6k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>3 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="raft基础"><a href="#raft基础" class="headerlink" title="raft基础"></a>raft基础</h1><p>一个raft集群一般来说有5个服务器结点，能让系统承受其中任意两台的down掉。每个服务器一共有三个状态，leader,follower,candidate,follower被动的接受来自candidate与leader的消息并作出回应。leader handle了所有了所有的客户端的请求，如果follower接收到了请求，会重定向到leader那去。</p>
+<p><img src="/images/status.png" alt="status"></p>
+<p>raft把时间分成任意长的阶段，从选举开始，每个阶段都是一个连续增长的整数，至少有一个或者多个candidate会尝试成为leader。如果有一个candidate成为了leader，则接下来的term，它将是leader。在一些情况下，选举会出现，平分票数的情况，这种情况，term将会维持没有leader的状态到结束，到下一次的新的选举。</p>
+<p><img src="/images/terms.png" alt=""></p>
+<p>不同的服务器 可能感知不到不同的term之间的转换，或者根本不知道有选举这回事，在这其中，term充当了一个逻辑时钟的作用，能让服务器能检测过时的信息，比如落后的leader。每一个服务器有一个current term number，随着时间增长，当服务器之间通信时，current term 会被 交换，如果有一个服务器的term小于别的，就会更新自己的，如果一个canditate或者leader发现它自己的term过时了，就会马上转变成follower，如果服务器收到了一个过时的请求，则会直接拒绝这个请求。</p>
+<p>raft的服务器之间用rpc请行通信，其中RequestVote用于canditate 来进行选举，AppendEntries 用于分发log与当心跳包（事实上是无论收到一个请求，都应该重置time out chekcer）。另外 还有一个转移快照的rpc。之后 再说。</p>
+<a id="more"></a>
+
+<h1 id="选举"><a href="#选举" class="headerlink" title="选举"></a>选举</h1><p>raft使用心跳机制来触发选举。当服务器启动的时候，它们都是follower，follower在收到来自leader或者 candidate合法的rpc请求之前，一直是follower，leader会周期性的发送心跳包来保持leader的权威性，心跳包是一个空的AppendEntries，不带有Log entries。当一个follower一个election timeout后没有收到心跳包，则认为leader没了，将开始一轮选举，选出一个新的leader。</p>
+<p>为了开始一次选举，follower会给current term+1然后转变成candidate，然后投自己一票，然后同时发起RequestVote RPC给别的服务器。一个candidate会持续到以下三件情况出现，(a)它成了leader，(b)其它服务器成了leader(c)一段时间过去后，没有server成为leader。这将在之后讨论（应该是过一段时间重新发起）</p>
+<p>一个candidate如果收到了整个集群中大多数的投票 (with same term)，就会成为leader。每一个服务器最多只能投出一票。这个<code>大多数</code> 的规则决定了，在一个term里，只能一个candidate成为leader。一旦candidate成为了leader，则会开始发送心跳包给其它所有的服务器，来保证自己的权威与阻止其它服务器发起选举。</p>
+<p>在投票的过程中，可能 会收到来其它服务器发来的AppendEntries RPC来声称自己是leader，这种情况，看leader的term与自己的current term的大小，如果比自己大，那别人就是leader，自己将退回到follower的状态，如果比自己小，就是拒绝别人的RPC call，并继续进行选举。</p>
+<p>一个选举如果选不出一个leader那就是分裂的选举，即没人得到大多数票，这种情况下，会等待超时直到下一次的选举，但是如果 没有做额外的操作，分裂的选举会不停的进行下去。</p>
+<p>raft采用了随机的选举超时来保证split vote是很少见的并且能快速的被解决。即每一个服务器的election timeout不一样，在重新发起选举的之前会等待这个timeout，timeout少的会先发起选举。一般的timeout会选择一个区间比如150-300ms之间。这样会有一个服务器超时完成并在别的服务器节点超时完成前完成选举。</p>
+<h1 id="Log-replication"><a href="#Log-replication" class="headerlink" title="Log replication"></a>Log replication</h1><p>一旦一个leader被选举，那它就开始接受client的请求，每一个client的请求都包含一个命令，这个命令会被 replicated state machines执行，leader将会把这个command append到日志中去，作为一个新的entry，然后用AppendEntries 分发到其它的服务器。 leader会永远的尝试去写入follower log entry，直到所有的log entry都被 写入。</p>
+<p>leader决定什么时候日志被 commit，当大多数的服务器都复制了一份entry后，就会提交，也会提前之前的entries，论文中设计了两个重要的属性</p>
+<ul>
+<li>如果不同日志中的两个Entry有一样的index跟term，那他们存的一个东西</li>
+<li>如果不同日志中的两个entry有一样的index跟term，那他们之前的所有entry是相同的。</li>
+</ul>
+<p>属性1保证了，在给定的term与index中只会创建一个entry，属性2保证了一致性的简单性。</p>
+<p>如果follower发现leader发过来的index跟term在自己的log里没有，那么会拒绝这个新的entry。（因为在消息中包含了这条新的之前的index跟term，所以可以检测之前的一致性，如果之前的都不一致就根本不会append这个新的）</p>
+<p>在Raft中，处理leader与follower的不一致性是通过强制把leader的log记录复制给follower来完成的，这意味着follower的log的冲突部分，会被完全覆盖。</p>
+<p>为了使follwer的log保持一致，leader必须找到leader与follwer最近的一个一样的entry，然后把这个之后的log都发给follower。</p>
+<p>leader对于每一个follower都维护了一个index，这个index是leader将要发给follower的下一个index，当一个leader上台后， 会把这个next index初始化为自己log中的最后一个index，如果有follower的记录与leader不一致，那么在下一次Append Entries RPC的一致性检查中失败。当这个调用失败后，leader将决定下一个next index是多少，最终，next index会在重试中到达leader与follower一致的地方。当RPC调用成功之后，leader会把之后的记录全发给follower，这样就follower就完成了与leader的一致性同步。</p>
+<p>leader永远不会改自己的log。这是强保证。</p>
+<h1 id="强约束"><a href="#强约束" class="headerlink" title="强约束"></a>强约束</h1><p>为了达成算法的强一致性，必须加上一些强约束。</p>
+<h2 id="选举-1"><a href="#选举-1" class="headerlink" title="选举"></a>选举</h2><p>RPC必须包含candidate的log，然后投票者看canditate的log是否比自己的旧，如果旧，则会拒绝投给它，这样会保证选举出来的leader跟大多数的投票者中的log是一致的。</p>
+<h2 id="非提交的entry"><a href="#非提交的entry" class="headerlink" title="非提交的entry"></a>非提交的entry</h2><p>raft不会提交之前阶段的非提交的entry。对于raft来说，如果leader当前的entry提交了，其中的潜在的语义包含了之前的entry都是提交了的。</p>
+<h2 id="安全性争论"><a href="#安全性争论" class="headerlink" title="安全性争论"></a>安全性争论</h2><p>这部分主要是证明future term的log是 一定包含了之前term的提交的，因为如果没提交的话，会有两个矛盾，第一，它成为不了leader，第二，它的entry log一定比之前的要大。原文中用的反证法，说term U没有包含term T的 log。实际上，在投票的时候 它成为不了leader，另外一个就是假如它是leader，它的log也得包含之前的，不然提交不了到follower。</p>
+<h2 id="崩溃"><a href="#崩溃" class="headerlink" title="崩溃"></a>崩溃</h2><p>如果follower或者candidate崩溃了，leader会一直发请求，直到成功，如果follower在commit log之后但是没有回复，之后重启了，发现收到了同样index的entry写入请求，会忽视这个请求。</p>
+<h2 id="时间与可用性"><a href="#时间与可用性" class="headerlink" title="时间与可用性"></a>时间与可用性</h2><p>raft的安全性不应该依赖时间：系统不应该因为一些事件发生的比预期的慢或者快就产生错误的结果。然而可用性却是不可避免的依赖时间。例如，因为如果回复慢了，follower就要变成candidate了。</p>
+<p>其中leader election是raft中对时间最敏感的。raft将会选出一个稳定的leader，且这个系统满足这样的延迟要求：broadcastTime &lt; electionTimout &lt; MTBF。</p>
+<p>广播时间应该要比选举超时少一个数量级，而选举时间应该要比恢复时间要少几个数量级。这样当leader崩溃的时候，也只有选举时间内不可用而已。</p>
+<p>通常来说broadcasttim从0.5ms到20ms不等，而选举超时从10 ms 到500ms不等。而mtbf几个月。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/6-824/" rel="tag"># 6.824</a>
+              <a href="/tags/raft/" rel="tag"># raft</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/24/rust-sized-type/" rel="prev" title="Rust Sized Trait与类型大小">
+      <i class="fa fa-chevron-left"></i> Rust Sized Trait与类型大小
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/05/26/fix-xv6-boot/" rel="next" title="Fix xv6 code can not boot on newest qemu">
+      Fix xv6 code can not boot on newest qemu <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#raft基础"><span class="nav-number">1.</span> <span class="nav-text">raft基础</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#选举"><span class="nav-number">2.</span> <span class="nav-text">选举</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Log-replication"><span class="nav-number">3.</span> <span class="nav-text">Log replication</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#强约束"><span class="nav-number">4.</span> <span class="nav-text">强约束</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#选举-1"><span class="nav-number">4.1.</span> <span class="nav-text">选举</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#非提交的entry"><span class="nav-number">4.2.</span> <span class="nav-text">非提交的entry</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安全性争论"><span class="nav-number">4.3.</span> <span class="nav-text">安全性争论</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#崩溃"><span class="nav-number">4.4.</span> <span class="nav-text">崩溃</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时间与可用性"><span class="nav-number">4.5.</span> <span class="nav-text">时间与可用性</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="L1nxy"
+      src="https://s.gravatar.com/avatar/87b5fc4f2aff3327c799306d001e0441?s=80">
+  <p class="site-author-name" itemprop="name">L1nxy</p>
+  <div class="site-description" itemprop="description">Keep learning</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/l1nxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;l1nxy" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:l1nxy.zy@gmail.com" title="E-Mail → mailto:l1nxy.zy@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/linxy_zy" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;linxy_zy" rel="noopener" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Friends
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://koushiro.me/" title="http:&#x2F;&#x2F;koushiro.me" rel="noopener" target="_blank">koushiro</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://jacobchang.cn/" title="https:&#x2F;&#x2F;jacobchang.cn&#x2F;" rel="noopener" target="_blank">jacobchang</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">L1nxy</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">35k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">32 mins.</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

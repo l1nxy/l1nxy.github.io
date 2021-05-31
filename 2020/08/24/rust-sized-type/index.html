@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"l1nxy.me","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言这篇文章来自于Github的一篇关于Rust size的一些介绍，本文内容基本上是这文章的总结。可以话尽量看原文。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rust Sized Trait与类型大小">
+<meta property="og:url" content="http://l1nxy.me/2020/08/24/rust-sized-type/index.html">
+<meta property="og:site_name" content="L1nxy&#39;s Blog">
+<meta property="og:description" content="前言这篇文章来自于Github的一篇关于Rust size的一些介绍，本文内容基本上是这文章的总结。可以话尽量看原文。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-08-24T15:56:35.000Z">
+<meta property="article:modified_time" content="2021-05-26T14:57:52.991Z">
+<meta property="article:author" content="L1nxy">
+<meta property="article:tag" content="rust">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://l1nxy.me/2020/08/24/rust-sized-type/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Rust Sized Trait与类型大小 | L1nxy's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">L1nxy's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">This is a simple blog about tech and life</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://l1nxy.me/2020/08/24/rust-sized-type/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s.gravatar.com/avatar/87b5fc4f2aff3327c799306d001e0441?s=80">
+      <meta itemprop="name" content="L1nxy">
+      <meta itemprop="description" content="Keep learning">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="L1nxy's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Rust Sized Trait与类型大小
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-24 23:56:35" itemprop="dateCreated datePublished" datetime="2020-08-24T23:56:35+08:00">2020-08-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-05-26 22:57:52" itemprop="dateModified" datetime="2021-05-26T22:57:52+08:00">2021-05-26</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>13k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>12 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这篇文章来自于Github的一篇关于<a href="https://github.com/pretzelhammer/rust-blog/blob/master/posts/sizedness-in-rust.md" target="_blank" rel="noopener">Rust size</a>的一些介绍，本文内容基本上是这文章的总结。可以话尽量看原文。</p>
+<a id="more"></a>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p><code>sideness</code>在Rust中是一个比较底层的概念，但是又比较重要，而且与许多Rust特性有关系。通常我们能在编译器的错误信息中看到<code>x doesn&#39;t have size known at compile time</code>，那么到底什么是<code>sized type</code>；什么是<code>unsized type</code>以及什么是<code>zero-sized type</code>。他们应该怎么使用，和一些优缺点。</p>
+<p>这有一张表是以一个总的视角来看Rust的type。</p>
+<table>
+<thead>
+<tr>
+<th>Phrase</th>
+<th>Shorthand for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>sizedness</td>
+<td>property of being sized or unsized</td>
+</tr>
+<tr>
+<td>sized type</td>
+<td>type with a known size at compile time</td>
+</tr>
+<tr>
+<td>1) unsized type <em>or</em> 2) DST</td>
+<td>dynamically-sized type, i.e. size not known at compile time</td>
+</tr>
+<tr>
+<td>?sized type</td>
+<td>type that may or may not be sized</td>
+</tr>
+<tr>
+<td>unsized coercion</td>
+<td>coercing a sized type into an unsized type</td>
+</tr>
+<tr>
+<td>ZST</td>
+<td>zero-sized type, i.e. instances of the type are 0 bytes in size</td>
+</tr>
+<tr>
+<td>width</td>
+<td>single unit of measurement of pointer width</td>
+</tr>
+<tr>
+<td>1) thin pointer <em>or</em>  2) single-width pointer</td>
+<td>pointer that is <em>1 width</em></td>
+</tr>
+<tr>
+<td>1) fat pointer <em>or</em>  2) double-width pointer</td>
+<td>pointer that is <em>2 widths</em></td>
+</tr>
+<tr>
+<td>1) pointer <em>or</em> 2) reference</td>
+<td>some pointer of some width, width will be clarified by context</td>
+</tr>
+<tr>
+<td>slice</td>
+<td>double-width pointer to a dynamically sized view into some array</td>
+</tr>
+</tbody></table>
+<h2 id="sizedness"><a href="#sizedness" class="headerlink" title="sizedness"></a>sizedness</h2><p>到底什么叫sizedness呢，在Rust中，如果一个类型的大小能在编译器能确定下来，那就是一个sized type。确定一个类型的大小是非常重要的，因为这关系到在stack上申请多大内存，一个确定大小的类型能够pass by value and ref。如果一个type是 unsized type  or DST(dynamic Sized Type)那么它就不能在stack上申请内存，这两种情况的变量只能pass by ref。</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::mem::size_of;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// primitives</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">4</span>, size_of::&lt;<span class="built_in">i32</span>&gt;());</span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">8</span>, size_of::&lt;<span class="built_in">f64</span>&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// tuples</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">8</span>, size_of::&lt;(<span class="built_in">i32</span>, <span class="built_in">i32</span>)&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// arrays</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">0</span>, size_of::&lt;[<span class="built_in">i32</span>; <span class="number">0</span>]&gt;());</span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">12</span>, size_of::&lt;[<span class="built_in">i32</span>; <span class="number">3</span>]&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Point</span></span> &#123;</span><br><span class="line">        x: <span class="built_in">i32</span>,</span><br><span class="line">        y: <span class="built_in">i32</span>,</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// structs</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">8</span>, size_of::&lt;Point&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// enums</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">8</span>, size_of::&lt;<span class="built_in">Option</span>&lt;<span class="built_in">i32</span>&gt;&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// get pointer width, will be</span></span><br><span class="line">    <span class="comment">// 4 bytes wide on 32-bit targets or</span></span><br><span class="line">    <span class="comment">// 8 bytes wide on 64-bit targets</span></span><br><span class="line">    <span class="keyword">const</span> WIDTH: <span class="built_in">usize</span> = size_of::&lt;&amp;()&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// pointers to sized types are 1 width</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;&amp;<span class="built_in">i32</span>&gt;());</span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;&amp;<span class="keyword">mut</span> <span class="built_in">i32</span>&gt;());</span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;<span class="built_in">Box</span>&lt;<span class="built_in">i32</span>&gt;&gt;());</span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;<span class="function"><span class="keyword">fn</span></span>(<span class="built_in">i32</span>) -&gt; <span class="built_in">i32</span>&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> DOUBLE_WIDTH: <span class="built_in">usize</span> = <span class="number">2</span> * WIDTH;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// unsized struct</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Unsized</span></span> &#123;</span><br><span class="line">        unsized_field: [<span class="built_in">i32</span>],</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// pointers to unsized types are 2 widths</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;&amp;<span class="built_in">str</span>&gt;()); <span class="comment">// slice</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;&amp;[<span class="built_in">i32</span>]&gt;()); <span class="comment">// slice</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;&amp;<span class="keyword">dyn</span> <span class="built_in">ToString</span>&gt;()); <span class="comment">// trait object</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;<span class="built_in">Box</span>&lt;<span class="keyword">dyn</span> <span class="built_in">ToString</span>&gt;&gt;()); <span class="comment">// trait object</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;&amp;Unsized&gt;()); <span class="comment">// user-defined unsized type</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// unsized types</span></span><br><span class="line">    size_of::&lt;<span class="built_in">str</span>&gt;(); <span class="comment">// compile error</span></span><br><span class="line">    size_of::&lt;[<span class="built_in">i32</span>]&gt;(); <span class="comment">// compile error</span></span><br><span class="line">    size_of::&lt;<span class="keyword">dyn</span> <span class="built_in">ToString</span>&gt;(); <span class="comment">// compile error</span></span><br><span class="line">    size_of::&lt;Unsized&gt;(); <span class="comment">// compile error</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>从上面的代码可以看出来，Rust中的原生类型都有确定的大小，像struct,enum,array，以及由原生与类型与指针或者其它nested struct enum等组成的类型都能在编译期确定大小。而像slice是不能确定大小的，因为我们并不知道这个slice到底会多大，这些只有运行时才会知道。</p>
+<ul>
+<li><p>一个指向动态大小视图的指针称为slice，比如&amp;str就是<em>string slice</em></p>
+</li>
+<li><p>slice两个width大小是因为存了一个指向数据的指针与元素的数量 </p>
+</li>
+<li><p>trait两个width大小是因为存一个指向数据的指针与指向虚表的指针</p>
+</li>
+<li><p>unsized struct两个width大小是因为存了一个指针与这个struct 的大小</p>
+</li>
+<li><p>unsized struct只能一个unsized filed而且这个必须是struct中的最后一个字段</p>
+</li>
+</ul>
+<p>下面有些例子可以看slice跟array的区别：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::mem::size_of;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> WIDTH: <span class="built_in">usize</span> = size_of::&lt;&amp;()&gt;();</span><br><span class="line"><span class="keyword">const</span> DOUBLE_WIDTH: <span class="built_in">usize</span> = <span class="number">2</span> * WIDTH;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// data length stored in type</span></span><br><span class="line">    <span class="comment">// an [i32; 3] is an array of three i32s</span></span><br><span class="line">    <span class="keyword">let</span> nums: &amp;[<span class="built_in">i32</span>; <span class="number">3</span>] = &amp;[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// single-width pointer</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;&amp;[<span class="built_in">i32</span>; <span class="number">3</span>]&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> sum = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// can iterate over nums safely</span></span><br><span class="line">    <span class="comment">// Rust knows it's exactly 3 elements</span></span><br><span class="line">    <span class="keyword">for</span> num <span class="keyword">in</span> nums &#123;</span><br><span class="line">        sum += num;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">6</span>, sum);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// unsized coercion from [i32; 3] to [i32]</span></span><br><span class="line">    <span class="comment">// data length now stored in pointer</span></span><br><span class="line">    <span class="keyword">let</span> nums: &amp;[<span class="built_in">i32</span>] = &amp;[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// double-width pointer required to also store data length</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;&amp;[<span class="built_in">i32</span>]&gt;());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> sum = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// can iterate over nums safely</span></span><br><span class="line">    <span class="comment">// Rust knows it's exactly 3 elements</span></span><br><span class="line">    <span class="keyword">for</span> num <span class="keyword">in</span> nums &#123;</span><br><span class="line">        sum += num;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">6</span>, sum);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面有些例子可以看struct 与 trait的区别：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::mem::size_of;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> WIDTH: <span class="built_in">usize</span> = size_of::&lt;&amp;()&gt;();</span><br><span class="line"><span class="keyword">const</span> DOUBLE_WIDTH: <span class="built_in">usize</span> = <span class="number">2</span> * WIDTH;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait</span></span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">print</span></span>(&amp;<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Struct</span></span>;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Struct2</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> Trait <span class="keyword">for</span> Struct &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">print</span></span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"struct"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> Trait <span class="keyword">for</span> Struct2 &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">print</span></span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">"struct2"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">print_struct</span></span>(s: &amp;Struct) &#123;</span><br><span class="line">    <span class="comment">// always prints "struct"</span></span><br><span class="line">    <span class="comment">// this is known at compile-time</span></span><br><span class="line">    s.print();</span><br><span class="line">    <span class="comment">// single-width pointer</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;&amp;Struct&gt;());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">print_struct2</span></span>(s2: &amp;Struct2) &#123;</span><br><span class="line">    <span class="comment">// always prints "struct2"</span></span><br><span class="line">    <span class="comment">// this is known at compile-time</span></span><br><span class="line">    s2.print();</span><br><span class="line">    <span class="comment">// single-width pointer</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(WIDTH, size_of::&lt;&amp;Struct2&gt;());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">print_trait</span></span>(t: &amp;<span class="keyword">dyn</span> Trait) &#123;</span><br><span class="line">    <span class="comment">// print "struct" or "struct2" ?</span></span><br><span class="line">    <span class="comment">// this is unknown at compile-time</span></span><br><span class="line">    t.print();</span><br><span class="line">    <span class="comment">// Rust has to check the pointer at run-time</span></span><br><span class="line">    <span class="comment">// to figure out whether to use Struct's</span></span><br><span class="line">    <span class="comment">// or Struct2's implementation of "print"</span></span><br><span class="line">    <span class="comment">// so the pointer has to be double-width</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(DOUBLE_WIDTH, size_of::&lt;&amp;<span class="keyword">dyn</span> Trait&gt;());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// single-width pointer to data</span></span><br><span class="line">    <span class="keyword">let</span> s = &amp;Struct; </span><br><span class="line">    print_struct(s); <span class="comment">// prints "struct"</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// single-width pointer to data</span></span><br><span class="line">    <span class="keyword">let</span> s2 = &amp;Struct2;</span><br><span class="line">    print_struct2(s2); <span class="comment">// prints "struct2"</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// unsized coercion from Struct to dyn Trait</span></span><br><span class="line">    <span class="comment">// double-width pointer to point to data AND Struct's vtable</span></span><br><span class="line">    <span class="keyword">let</span> t: &amp;<span class="keyword">dyn</span> Trait = &amp;Struct;</span><br><span class="line">    print_trait(t); <span class="comment">// prints "struct"</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// unsized coercion from Struct2 to dyn Trait</span></span><br><span class="line">    <span class="comment">// double-width pointer to point to data AND Struct2's vtable</span></span><br><span class="line">    <span class="keyword">let</span> t: &amp;<span class="keyword">dyn</span> Trait = &amp;Struct2;</span><br><span class="line">    print_trait(t); <span class="comment">// prints "struct2"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Sized-Trait"><a href="#Sized-Trait" class="headerlink" title="Sized Trait"></a>Sized Trait</h2><p>Sized trait是Rust一个marker trait和auto trait。auto trait是说如果一个类型满足了条件则会被自动实现。而markter trait说用来标记一个类型是某个特定的属性的。marker trait没有任何的trait item，比如函数，变量等。所有的auto trait都是marker trait，但是不是所有的marker trait都是auto trait。auto trait必须得是marker trait，这样编译器才能提供一个默认的实现 。<br>一个类型如果它的所有的成员都是sized的，那么它就是<code>Sized</code>。同样的trait还有<code>Send</code>与<code>Sync</code>。如果一个类型能安全地在线程间传递，那么它就是<code>Send</code>的，如果一个类型能在线程间安全的shared ref，那就是<code>Sync</code>的。但是<code>Sized</code>有点不同的是，不能对一个类型把它<em>去掉</em>：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#![feature(negative_impls)]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// this type is Sized, Send, and Sync</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Struct</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// opt-out of Send trait</span></span><br><span class="line"><span class="keyword">impl</span> !<span class="built_in">Send</span> <span class="keyword">for</span> Struct &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// opt-out of Sync trait</span></span><br><span class="line"><span class="keyword">impl</span> !<span class="built_in">Sync</span> <span class="keyword">for</span> Struct &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> !<span class="built_in">Sized</span> <span class="keyword">for</span> Struct &#123;&#125; <span class="comment">// compile error</span></span><br></pre></td></tr></table></figure>
+<h2 id="泛型参数中的Sized"><a href="#泛型参数中的Sized" class="headerlink" title="泛型参数中的Sized"></a>泛型参数中的<code>Sized</code></h2><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// this generic function...</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">func</span></span>&lt;T&gt;(t: T) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ...desugars to...</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">func</span></span>&lt;T: <span class="built_in">Sized</span>&gt;(t: T) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ...which we can opt-out of by explicitly setting ?Sized...</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">func</span></span>&lt;T: ?<span class="built_in">Sized</span>&gt;(t: T) &#123;&#125; <span class="comment">// compile error</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ...which doesn't compile since t doesn't have</span></span><br><span class="line"><span class="comment">// a known size so we must put it behind a pointer...</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">func</span></span>&lt;T: ?<span class="built_in">Sized</span>&gt;(t: &amp;T) &#123;&#125; <span class="comment">// compiles</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">func</span></span>&lt;T: ?<span class="built_in">Sized</span>&gt;(t: <span class="built_in">Box</span>&lt;T&gt;) &#123;&#125; <span class="comment">// compiles</span></span><br></pre></td></tr></table></figure>
+<p>当我们写下一个泛型函数时，T就得到了<code>Sized</code>的trait。</p>
+<ul>
+<li><code>?Sized</code>意思是这个类型可能是Sized或者是也许Sized的。这能让类型可以是Sized也可以的Unsized。</li>
+<li><code>?Sized</code>一般用来减少参数的约束，且是Rust中唯一能减少约束的措施。</li>
+</ul>
+<p>一般来说，我们还是需要放松对泛型参数的约束，因为实例化的时候， 实际类型可能是Sized也有可能是Unsized。<br>有如下代码：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::fmt::<span class="built_in">Debug</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">debug</span></span>&lt;T: <span class="built_in">Debug</span>&gt;(t: T) &#123; <span class="comment">// T: Debug + Sized</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"&#123;:?&#125;"</span>, t);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    debug(<span class="string">"my str"</span>); <span class="comment">// T = &amp;str, &amp;str: Debug + Sized ✔️</span></span><br></pre></td></tr></table></figure>
+<p>虽然这样可行，但是如果参数是个ref呢？</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::fmt::<span class="built_in">Debug</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">dbg</span></span>&lt;T: <span class="built_in">Debug</span>&gt;(t: &amp;T) &#123; <span class="comment">// T: Debug + Sized</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">"&#123;:?&#125;"</span>, t);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    dbg(<span class="string">"my str"</span>); <span class="comment">// &amp;T = &amp;str, T = str, str: Debug + !Sized ❌</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>错误如下：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">error[E0277]: the size for values of type `str` cannot be known at compilation time</span><br><span class="line"> --&gt; src/main.rs:<span class="number">8</span>:<span class="number">9</span></span><br><span class="line">  |</span><br><span class="line"><span class="number">3</span> | <span class="function"><span class="keyword">fn</span> <span class="title">dbg</span></span>&lt;T: <span class="built_in">Debug</span>&gt;(t: &amp;T) &#123;</span><br><span class="line">  |        - required by this bound <span class="keyword">in</span> `dbg`</span><br><span class="line">...</span><br><span class="line"><span class="number">8</span> |     dbg(<span class="string">"my str"</span>);</span><br><span class="line">  |         ^^^^^^^^ doesn<span class="symbol">'t</span> have a size known at compile-time</span><br><span class="line">  |</span><br><span class="line">  = help: the <span class="class"><span class="keyword">trait</span> `<span class="title">std</span></span>::marker::<span class="built_in">Sized</span>` is not implemented <span class="keyword">for</span> `<span class="built_in">str</span>`</span><br><span class="line">  = note: to learn more, visit &lt;https:<span class="comment">//doc.rust-lang.org/book/ch19-04-advanced-types.html#dynamically-sized-types-and-the-sized-trait&gt;</span></span><br><span class="line">help: consider relaxing the implicit `<span class="built_in">Sized</span>` restriction</span><br><span class="line">  |</span><br><span class="line"><span class="number">3</span> | <span class="function"><span class="keyword">fn</span> <span class="title">dbg</span></span>&lt;T: <span class="built_in">Debug</span> + ?<span class="built_in">Sized</span>&gt;(t: &amp;T) &#123;</span><br><span class="line">  |</span><br></pre></td></tr></table></figure>
+<p>这其中的类型也许有点怪，但是看表就很好理解了：</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th><code>T</code></th>
+<th><code>&amp;T</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&amp;str</code></td>
+<td><code>T</code> = <code>&amp;str</code></td>
+<td><code>T</code> = <code>str</code></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th><code>Sized</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>str</code></td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>&amp;str</code></td>
+<td>✔️</td>
+</tr>
+<tr>
+<td><code>&amp;&amp;str</code></td>
+<td>✔️</td>
+</tr>
+</tbody></table>
+<p>所以最好对泛型参数加上一个<code>?Sized</code>的标记来放松对类型的约束。</p>
+<h2 id="Unsized-type"><a href="#Unsized-type" class="headerlink" title="Unsized type"></a>Unsized type</h2><h3 id="slices"><a href="#slices" class="headerlink" title="slices"></a>slices</h3><p>最常见的切片是str与数组的切片&amp;[T]。切片的一个优点是许多的类型都能转换成它们。强制类型转换在Rust中很常见，特别是在函数参数中。一种类型转换是deref和unsized。一个deref转换是当<code>T</code>通过一个deref操作转换成<code>U</code>，比如<code>T:Deref&lt;Target=U&gt;</code>比如<code>STring.deref() -&gt; str</code>。一个unsized转换是把T转换成U，其中T是sized type 而U是unsized type。比如<code>T:Unsized&lt;U&gt;</code>，[i32;3] -&gt;[i32]。</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait</span></span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">method</span></span>(&amp;<span class="keyword">self</span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> Trait <span class="keyword">for</span> <span class="built_in">str</span> &#123;</span><br><span class="line">    <span class="comment">// can now call "method" on</span></span><br><span class="line">    <span class="comment">// 1) str or</span></span><br><span class="line">    <span class="comment">// 2) String since String: Deref&lt;Target = str&gt;</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">impl</span>&lt;T&gt; Trait <span class="keyword">for</span> [T] &#123;</span><br><span class="line">    <span class="comment">// can now call "method" on</span></span><br><span class="line">    <span class="comment">// 1) any &amp;[T]</span></span><br><span class="line">    <span class="comment">// 2) any U where U: Deref&lt;Target = [T]&gt;, e.g. Vec&lt;T&gt;</span></span><br><span class="line">    <span class="comment">// 3) [T; N] for any N, since [T; N]: Unsize&lt;[T]&gt;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">str_fun</span></span>(s: &amp;<span class="built_in">str</span>) &#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">slice_fun</span></span>&lt;T&gt;(s: &amp;[T]) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> str_slice: &amp;<span class="built_in">str</span> = <span class="string">"str slice"</span>;</span><br><span class="line">    <span class="keyword">let</span> string: <span class="built_in">String</span> = <span class="string">"string"</span>.to_owned();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// function args</span></span><br><span class="line">    str_fun(str_slice);</span><br><span class="line">    str_fun(&amp;string); <span class="comment">// deref coercion</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// method calls</span></span><br><span class="line">    str_slice.method();</span><br><span class="line">    string.method(); <span class="comment">// deref coercion</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> slice: &amp;[<span class="built_in">i32</span>] = &amp;[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">let</span> three_array: [<span class="built_in">i32</span>; <span class="number">3</span>] = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line">    <span class="keyword">let</span> five_array: [<span class="built_in">i32</span>; <span class="number">5</span>] = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];</span><br><span class="line">    <span class="keyword">let</span> vec: <span class="built_in">Vec</span>&lt;<span class="built_in">i32</span>&gt; = <span class="built_in">vec!</span>[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// function args</span></span><br><span class="line">    slice_fun(slice);</span><br><span class="line">    slice_fun(&amp;vec); <span class="comment">// deref coercion</span></span><br><span class="line">    slice_fun(&amp;three_array); <span class="comment">// unsized coercion</span></span><br><span class="line">    slice_fun(&amp;five_array); <span class="comment">// unsized coercion</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// method calls</span></span><br><span class="line">    slice.method();</span><br><span class="line">    vec.method(); <span class="comment">// deref coercion</span></span><br><span class="line">    three_array.method(); <span class="comment">// unsized coercion</span></span><br><span class="line">    five_array.method(); <span class="comment">// unsized coercion</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Trait-Object"><a href="#Trait-Object" class="headerlink" title="Trait Object"></a>Trait Object</h3><p>对于一个Trait来说，是?Sized的。因为不知道是Sized type 还是unsized type会去实现它。</p>
+<p><code>Trait : ?Sized</code>对于<code>impl Trait for dyn Trait</code>是必要的。</p>
+<p>我们能对每一个方法加个Self:Sized的约束，但是不能给Trait加个Sized约束。</p>
+<h4 id="Trait-Object-的局限性"><a href="#Trait-Object-的局限性" class="headerlink" title="Trait Object 的局限性"></a>Trait Object 的局限性</h4><ul>
+<li>不能把一个Unsized的类型转换成Trait Object</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">generic</span></span>&lt;T: <span class="built_in">ToString</span>&gt;(t: T) &#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">trait_object</span></span>(t: &amp;<span class="keyword">dyn</span> <span class="built_in">ToString</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    generic(<span class="built_in">String</span>::from(<span class="string">"String"</span>)); <span class="comment">// compiles</span></span><br><span class="line">    generic(<span class="string">"str"</span>); <span class="comment">// compiles</span></span><br><span class="line">    trait_object(&amp;<span class="built_in">String</span>::from(<span class="string">"String"</span>)); <span class="comment">// compiles, unsized coercion</span></span><br><span class="line">    trait_object(<span class="string">"str"</span>); <span class="comment">// compile error, unsized coercion impossible</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>不能创造出多Trait的object的动态分发：因为要存两个trait的vtable要更多的内存，而正确的组合方式如下：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait</span></span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">method</span></span>(&amp;<span class="keyword">self</span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait2</span></span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">method2</span></span>(&amp;<span class="keyword">self</span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait3</span></span>: Trait + Trait2 &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// auto blanket impl Trait3 for any type that also impls Trait &amp; Trait2</span></span><br><span class="line"><span class="keyword">impl</span>&lt;T: Trait + Trait2&gt; Trait3 <span class="keyword">for</span> T &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// from `dyn Trait + Trait2` to `dyn Trait3` </span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">function</span></span>(t: &amp;<span class="keyword">dyn</span> Trait3) &#123;</span><br><span class="line">    t.method(); <span class="comment">// compiles</span></span><br><span class="line">    t.method2(); <span class="comment">// compiles</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Rust的trait不支持向上转换：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait</span></span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">method</span></span>(&amp;<span class="keyword">self</span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait2</span></span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">method2</span></span>(&amp;<span class="keyword">self</span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait3</span></span>: Trait + Trait2 &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span>&lt;T: Trait + Trait2&gt; Trait3 <span class="keyword">for</span> T &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Struct</span></span>;</span><br><span class="line"><span class="keyword">impl</span> Trait <span class="keyword">for</span> Struct &#123;&#125;</span><br><span class="line"><span class="keyword">impl</span> Trait2 <span class="keyword">for</span> Struct &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">takes_trait</span></span>(t: &amp;<span class="keyword">dyn</span> Trait) &#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">takes_trait2</span></span>(t: &amp;<span class="keyword">dyn</span> Trait2) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> t: &amp;<span class="keyword">dyn</span> Trait3 = &amp;Struct;</span><br><span class="line">    takes_trait(t); <span class="comment">// compile error</span></span><br><span class="line">    takes_trait2(t); <span class="comment">// compile error</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一个正确的做法的是去写显式的转换函数：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait</span></span> &#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait2</span></span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">trait</span> <span class="title">Trait3</span></span>: Trait + Trait2 &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">as_trait</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="keyword">dyn</span> Trait;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">as_trait2</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="keyword">dyn</span> Trait2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span>&lt;T: Trait + Trait2&gt; Trait3 <span class="keyword">for</span> T &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">as_trait</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="keyword">dyn</span> Trait &#123;</span><br><span class="line">        <span class="keyword">self</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">as_trait2</span></span>(&amp;<span class="keyword">self</span>) -&gt; &amp;<span class="keyword">dyn</span> Trait2 &#123;</span><br><span class="line">        <span class="keyword">self</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Struct</span></span>;</span><br><span class="line"><span class="keyword">impl</span> Trait <span class="keyword">for</span> Struct &#123;&#125;</span><br><span class="line"><span class="keyword">impl</span> Trait2 <span class="keyword">for</span> Struct &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">takes_trait</span></span>(t: &amp;<span class="keyword">dyn</span> Trait) &#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">takes_trait2</span></span>(t: &amp;<span class="keyword">dyn</span> Trait2) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> t: &amp;<span class="keyword">dyn</span> Trait3 = &amp;Struct;</span><br><span class="line">    takes_trait(t.as_trait()); <span class="comment">// compiles</span></span><br><span class="line">    takes_trait2(t.as_trait2()); <span class="comment">// compiles</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="User-Defined-Unsized-Type"><a href="#User-Defined-Unsized-Type" class="headerlink" title="User-Defined Unsized Type"></a>User-Defined Unsized Type</h3><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Unsized</span></span> &#123;</span><br><span class="line">    unsized_field: [<span class="built_in">i32</span>],</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>定义一个unsized type的方法是，给struct一个unsize filed。这个unsized filed只能一个，且是最后一个。</p>
+<p>如果要定义一个不知道是不是Unsized type的struct，最好是用泛型去定义这个struct。</p>
+<p>我们常用的std::ffi:OsStr与std::path::Path就是标准库中的unsized struct。</p>
+<h3 id="Zero-Sized-Types"><a href="#Zero-Sized-Types" class="headerlink" title="Zero-Sized Types"></a>Zero-Sized Types</h3><p>Unit Type: <code>()</code> and <code>{}</code>；每一个函数如果没有显示的return的话都会返回一个<code>()</code>。</p>
+<p>尽管<code>()</code>是0大小类型，但是还是能给它实现一些trait：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::cmp::Ordering;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="built_in">Default</span> <span class="keyword">for</span> () &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">default</span></span>() &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="built_in">PartialEq</span> <span class="keyword">for</span> () &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">eq</span></span>(&amp;<span class="keyword">self</span>, _other: &amp;()) -&gt; <span class="built_in">bool</span> &#123;</span><br><span class="line">        <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">ne</span></span>(&amp;<span class="keyword">self</span>, _other: &amp;()) -&gt; <span class="built_in">bool</span> &#123;</span><br><span class="line">        <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="built_in">Ord</span> <span class="keyword">for</span> () &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">cmp</span></span>(&amp;<span class="keyword">self</span>, _other: &amp;()) -&gt; Ordering &#123;</span><br><span class="line">        Ordering::Equal</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译器知道<code>()</code>是zero-sized type。比如：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">    <span class="comment">// zero capacity is all the capacity we need to "store" infinitely many ()</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> vec: <span class="built_in">Vec</span>&lt;()&gt; = <span class="built_in">Vec</span>::with_capacity(<span class="number">0</span>);</span><br><span class="line">    <span class="comment">// causes no heap allocations or vec capacity changes</span></span><br><span class="line">    vec.push(()); <span class="comment">// len++</span></span><br><span class="line">    vec.push(()); <span class="comment">// len++</span></span><br><span class="line">    vec.push(()); <span class="comment">// len++</span></span><br><span class="line">    vec.pop(); <span class="comment">// len--</span></span><br><span class="line">    <span class="built_in">assert_eq!</span>(<span class="number">2</span>, vec.len());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译器就只会给Vec中的len操作，而不会在heap上去申请内存。</p>
+<h4 id="User-Defined-Unit-Structs"><a href="#User-Defined-Unit-Structs" class="headerlink" title="User-Defined Unit Structs"></a>User-Defined Unit Structs</h4><p>用户定义的Unit Struct:</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Struct</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>实际上Unit Struct比<code>()</code>有用的多，因为孤儿规则的存在，我们不能给<code>()</code>实现trait，因为它是标准库里的。这样我们可以实现一个等同的，更有意义的名字的Unit struct来给代码带来可读性。</p>
+<h4 id="Never-type"><a href="#Never-type" class="headerlink" title="Never type"></a>Never type</h4><p>Never type是第二个重要的ZST，它的代表了一个计算永远不会有结果的意思 。一些有趣的事情是：</p>
+<ul>
+<li><code>!</code>能转换成其它任何类型</li>
+<li>没法创建出一个<code>！</code>的实例。</li>
+</ul>
+<p>第一点的用处在于宏与break,continue等都有<code>!</code>类型，使得可以用在返回结果里，因为能转换成任何类型</p>
+<p>而第二点可以实现出一定会成功的函数:</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">function</span></span>() -&gt; <span class="built_in">Result</span>&lt;Success, !&gt;;</span><br></pre></td></tr></table></figure>
+
+<p>而<code>fn function() -&gt; Result&lt;!, Error&gt;;</code>是永远不会成功的函数。因为在返回的时候 ，创造不出它的实例来。</p>
+<h4 id="User-Defined-Pseudo-Never-Type"><a href="#User-Defined-Pseudo-Never-Type" class="headerlink" title="User-Defined Pseudo Never Type"></a>User-Defined Pseudo Never Type</h4><p>我们可以用用户自定义的never type来实现永远不会失败的函数：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Void</span></span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// example 1</span></span><br><span class="line"><span class="keyword">impl</span> FromStr <span class="keyword">for</span> <span class="built_in">String</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">type</span> <span class="title">Err</span></span> = Void;</span><br><span class="line">    <span class="function"><span class="keyword">fn</span> <span class="title">from_str</span></span>(s: &amp;<span class="built_in">str</span>) -&gt; <span class="built_in">Result</span>&lt;<span class="built_in">String</span>, Self::<span class="literal">Err</span>&gt; &#123;</span><br><span class="line">        <span class="literal">Ok</span>(<span class="built_in">String</span>::from(s))</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// example 2</span></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">run_server</span></span>() -&gt; <span class="built_in">Result</span>&lt;Void, ConnectionError&gt; &#123;</span><br><span class="line">    <span class="keyword">loop</span> &#123;</span><br><span class="line">        <span class="keyword">let</span> (request, response) = get_request()?;</span><br><span class="line">        <span class="keyword">let</span> result = request.process();</span><br><span class="line">        response.send(result);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/rust/" rel="tag"># rust</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/23/i3-with-gnome/" rel="prev" title="i3-with-gnome">
+      <i class="fa fa-chevron-left"></i> i3-with-gnome
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/30/raft-notes/" rel="next" title="raft extented论文笔记">
+      raft extented论文笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#介绍"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#sizedness"><span class="nav-number">2.1.</span> <span class="nav-text">sizedness</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sized-Trait"><span class="nav-number">2.2.</span> <span class="nav-text">Sized Trait</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#泛型参数中的Sized"><span class="nav-number">2.3.</span> <span class="nav-text">泛型参数中的Sized</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unsized-type"><span class="nav-number">2.4.</span> <span class="nav-text">Unsized type</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#slices"><span class="nav-number">2.4.1.</span> <span class="nav-text">slices</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Trait-Object"><span class="nav-number">2.4.2.</span> <span class="nav-text">Trait Object</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Trait-Object-的局限性"><span class="nav-number">2.4.2.1.</span> <span class="nav-text">Trait Object 的局限性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#User-Defined-Unsized-Type"><span class="nav-number">2.4.3.</span> <span class="nav-text">User-Defined Unsized Type</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Zero-Sized-Types"><span class="nav-number">2.4.4.</span> <span class="nav-text">Zero-Sized Types</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Defined-Unit-Structs"><span class="nav-number">2.4.4.1.</span> <span class="nav-text">User-Defined Unit Structs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Never-type"><span class="nav-number">2.4.4.2.</span> <span class="nav-text">Never type</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Defined-Pseudo-Never-Type"><span class="nav-number">2.4.4.3.</span> <span class="nav-text">User-Defined Pseudo Never Type</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="L1nxy"
+      src="https://s.gravatar.com/avatar/87b5fc4f2aff3327c799306d001e0441?s=80">
+  <p class="site-author-name" itemprop="name">L1nxy</p>
+  <div class="site-description" itemprop="description">Keep learning</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/l1nxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;l1nxy" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:l1nxy.zy@gmail.com" title="E-Mail → mailto:l1nxy.zy@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/linxy_zy" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;linxy_zy" rel="noopener" target="_blank"><i class="fab fa-twitter fa-fw"></i>Twitter</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Friends
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://koushiro.me/" title="http:&#x2F;&#x2F;koushiro.me" rel="noopener" target="_blank">koushiro</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://jacobchang.cn/" title="https:&#x2F;&#x2F;jacobchang.cn&#x2F;" rel="noopener" target="_blank">jacobchang</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">L1nxy</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">35k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">32 mins.</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
