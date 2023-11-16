@@ -57,6 +57,45 @@ options -nointerrupt -noconsolein -noconsoleout windows.nsh
 可以确定的是，如果输出正确，那么就可以在引导的时候选择windows了。
 PS，如果要改默认选择项，在`/boot/loader/loader.conf` 中可以改掉默认引导项，或者使用`bootctl set-default` 来指定。
 
+# 添加Hook自动生成
 
+2023-11-16更新：
+
+上述方案有个问题，如果每更新内核的话，`entryies`目录下的配置文件会被清空，所以需要有一个机制让内核更新的时候也能把windows.conf复制进去。  
+这里我选择的是，新建一个service，新建一个pacman的hook，每次在内核更新的时候，会触发hook，然后启动service，将处于其它路径中的配置文件复制到boot分区中去。  
+方法如下：  
+1. 在非boot目录放置上述两个文件:`windows.nsh` 与`windows.conf`。这里我选择的目录是`~/conf`;
+2. 在`/etc/systemd/system/`下面新建一个`update-windows-boot.service` ：
+   ```
+   [Unit]
+   Description=Update Windows boot entry
+
+   [Service]
+   ExecStart=/usr/bin/update-windows-entry.sh
+   ```
+3. 在`/usr/bin/`下面新建`update-windows-entry.sh`，别忘记`chmod +x` 加上权限:
+   ```
+   #!/bin/bash
+   cp /home/linxy/conf/windows.nsh /boot/
+   cp /home/linxy/conf/windows.conf /boot/loader/entries/
+   ```
+4. 在`/etc/pacman.d/hooks`下面新建`update-windows-entry.hook`:
+   ```
+    [Trigger]
+	Operation = Upgrade
+	Type = Package
+	Target = linux-cachyos
+	Target = linux-cachyos-lts
+	Target = linux-lts
+	Target = linux
+
+	[Action]
+	Description = Updating Windows boot entry...
+	When = PostTransaction
+	Exec = /usr/bin/systemctl start update-windows-boot.service
+   ```
+其中，target指的就是升级什么包的时候会触发这个hook。配置完成后，即可以在每次升级内核的时候保持windows的boot项。
+
+TODO：也许可以把service去掉，直接执行脚本。有时间再研究吧
 
 
