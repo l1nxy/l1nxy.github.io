@@ -1,1 +1,80 @@
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>mapreduce - 标签 - linxy's Blog</title><link>https://blog.linxy.dev/tags/mapreduce/</link><description>mapreduce - 标签 - linxy's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>linxy_zy@outlook.com (linxy)</managingEditor><webMaster>linxy_zy@outlook.com (linxy)</webMaster><lastBuildDate>Thu, 02 Jul 2020 13:42:38 +0800</lastBuildDate><atom:link href="https://blog.linxy.dev/tags/mapreduce/" rel="self" type="application/rss+xml"/><item><title>MIT 6.824 Lab1 mapreduce</title><link>https://blog.linxy.dev/map-reduce/</link><pubDate>Thu, 02 Jul 2020 13:42:38 +0800</pubDate><author><name>linxy</name></author><guid>https://blog.linxy.dev/map-reduce/</guid><description>前言MIT 6.824是著名的分布式课程，课程包含了视频，讲义，与作业。而本篇博文将阐述6.824课程的第一个作业的一些思考与解法，记录一些关</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Mapreduce on linxy&#39;s blog</title>
+    <link>https://linxy.dev/tags/mapreduce/</link>
+    <description>Recent content in Mapreduce on linxy&#39;s blog</description>
+    <image>
+      <title>linxy&#39;s blog</title>
+      <url>https://linxy.dev/images/papermod-cover.png</url>
+      <link>https://linxy.dev/images/papermod-cover.png</link>
+    </image>
+    <generator>Hugo -- 0.145.0</generator>
+    <language>en</language>
+    <copyright>linxy&amp;rsquo;s blog</copyright>
+    <lastBuildDate>Thu, 02 Jul 2020 13:42:38 +0800</lastBuildDate>
+    <atom:link href="https://linxy.dev/tags/mapreduce/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MIT 6.824 Lab1 mapreduce</title>
+      <link>https://linxy.dev/posts/map-reduce/</link>
+      <pubDate>Thu, 02 Jul 2020 13:42:38 +0800</pubDate>
+      <guid>https://linxy.dev/posts/map-reduce/</guid>
+      <description>&lt;h1 id=&#34;前言&#34;&gt;前言&lt;/h1&gt;
+&lt;p&gt;MIT 6.824是著名的分布式课程，课程包含了视频，讲义，与作业。而本篇博文将阐述6.824课程的第一个作业的一些思考与解法，记录一些关于Map Reduce系统的思考。&lt;/p&gt;
+&lt;h1 id=&#34;map-reduce&#34;&gt;Map Reduce&lt;/h1&gt;
+&lt;p&gt;Map Reduce作为“谷三篇”的第一篇，出名不是没有原因的，jeff dean的超前思想构建了谷歌搜索的基石，使得谷歌在超大应用系统的构建上得心应手。而Map Reduce则是一个基石中的基石。&lt;/p&gt;
+&lt;p&gt;Map Reduce的思想就是分布式的，系统中包含一个Master和许多个Worker，Master负责调度Worker与任务分发，容灾等等，Worker则与Master通信，请求任务。&lt;/p&gt;
+&lt;p&gt;而Map Reduce则把一个任务拆分成Map与Reduce部分，简单来说，Map部分是把输入通过用户定义的Map Function输出成中间文件，再把中间文件作为输入给Reduce，Reduce把中间文件调用Reduce Function，然后合并并输出。&lt;/p&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://linxy.dev/images/mapreduce.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;整个系统如图所示。如论文所说，这些文件可以是在本地机器上，也可以在分布式文件系统中，这并不影响整个系统框架。&lt;/p&gt;
+&lt;p&gt;具体Map Reduce的思想可以读一下Google的论文。&lt;/p&gt;
+&lt;h1 id=&#34;mit-6824-lab1&#34;&gt;MIT 6.824 Lab1&lt;/h1&gt;
+&lt;p&gt;现代的6.824比以前的要难许多，我做过之前的lab1，当时就把Map Reduce的框架都搭好了，只要写两个函数就算通过了。而这个2020的6.824要求对Go熟悉且要把MapReduce整个实现一个大概出来，前后花了不少时间去思考要怎么来做这个实验。&lt;/p&gt;
+&lt;h2 id=&#34;思考&#34;&gt;思考&lt;/h2&gt;
+&lt;p&gt;当我们拿到Lab的时候需要做什么？需要思考我们要实现哪些东西。MIT的代码里只给了几个RPC的函数，然后在这个基础去实现Map Reduce。&lt;/p&gt;
+&lt;p&gt;而我们要做的有：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;实现Master管理，这其中需要管理任务的状态，Worker请求任务的处理，Worker任务完成报告的处理，Worker失败超时的处理。&lt;/li&gt;
+&lt;li&gt;实现Worker请求任务，对Map部分任务的处理，对Reduce部分任务的处理，还有任务完成的上报。&lt;/li&gt;
+&lt;li&gt;还要实现一个文件锁，不能让Goroutine之间产生Race。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
+&lt;p&gt;我的一些方案是在Master的结构体里管理两个Channel，当Master启动之后，把任务发给MapChannel，然后在另一个Goroutine里面对这个MapChannel进行读取，Channel如果不设置的话，一方没有读，写方会阻塞住，所以只有Worker进行请求任务之后才会继续生产任务。当Map部分完成后，再启动Reduce部分，生产Reduce任务到ReduceChannel。&lt;/p&gt;
+&lt;p&gt;我们在每个请求任务的RPC返回之前再开启一个Goroutine来等待Worker的任务完成报告，这里我们用到了Go的select语法，并使用一个timer，如果超时就把这个任务再次Push进TaskChannel，即使任务失败了，也能再次把任务分发下去。&lt;/p&gt;
+&lt;p&gt;对于Worker部分的代码来说，完全就是苦力活，可以看看官方代码里那个非分布式的Worker里代码，可以直接复制过来。Worker如果联系不上Master了，马上退出进程，这样就不用实现一个退出语义了。（其实是我不知道怎么让Master去通知Worker退出）&lt;/p&gt;
+&lt;h2 id=&#34;代码&#34;&gt;代码&lt;/h2&gt;
+&lt;p&gt;这里只给出一些结构体的定义：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Master:&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;kd&#34;&gt;type&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;Master&lt;/span&gt; &lt;span class=&#34;kd&#34;&gt;struct&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;MapTaskList&lt;/span&gt;    &lt;span class=&#34;p&#34;&gt;[]&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;MapTask&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;ReduceTaskList&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[]&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;ReduceTask&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;MapTaskChan&lt;/span&gt;    &lt;span class=&#34;kd&#34;&gt;chan&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;MapTask&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;ReduceTaskChan&lt;/span&gt; &lt;span class=&#34;kd&#34;&gt;chan&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;ReduceTask&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;CompleteMapTaskNum&lt;/span&gt;    &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;CompleteReduceTaskNum&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;mu&lt;/span&gt;      &lt;span class=&#34;nx&#34;&gt;sync&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Mutex&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;files&lt;/span&gt;   &lt;span class=&#34;p&#34;&gt;[]&lt;/span&gt;&lt;span class=&#34;kt&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;nReduce&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Task Def&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;kd&#34;&gt;type&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;MapTask&lt;/span&gt; &lt;span class=&#34;kd&#34;&gt;struct&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;TaskNum&lt;/span&gt;    &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;TaskStatus&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;TASK_STATUS&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;FileName&lt;/span&gt;   &lt;span class=&#34;kt&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;NReduce&lt;/span&gt;    &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;kd&#34;&gt;type&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;ReduceTask&lt;/span&gt; &lt;span class=&#34;kd&#34;&gt;struct&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;TaskNum&lt;/span&gt;    &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;TaskStatus&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;TASK_STATUS&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;FileName&lt;/span&gt;   &lt;span class=&#34;p&#34;&gt;[]&lt;/span&gt;&lt;span class=&#34;kt&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;NReduce&lt;/span&gt;    &lt;span class=&#34;kt&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;一些吐槽&#34;&gt;一些吐槽&lt;/h2&gt;
+&lt;p&gt;这次写了蛮久了，因为不是很熟悉Go，学了一会才知道有select这种语法，然后官方的hint里让人把中间文件命名为mr-x-y.txt，这样其实挺坑的，因为testmr.sh里面没有把这个中间文件删除掉，而在文件读写的时候因为hash的缘故，不会把所有的文件清空，这样导致前一个test的中间文件会影响到后一个test。所以我加一个函数，把所有的中间文件清空的，这样也算是TDD吧。&lt;/p&gt;
+&lt;p&gt;接下来就是要做Lab2了，完成一个Raft。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

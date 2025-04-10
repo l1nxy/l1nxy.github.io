@@ -1,1 +1,66 @@
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>Rust - 标签 - linxy's Blog</title><link>https://blog.linxy.dev/tags/rust/</link><description>Rust - 标签 - linxy's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>linxy_zy@outlook.com (linxy)</managingEditor><webMaster>linxy_zy@outlook.com (linxy)</webMaster><lastBuildDate>Mon, 24 Aug 2020 11:25:32 +0800</lastBuildDate><atom:link href="https://blog.linxy.dev/tags/rust/" rel="self" type="application/rss+xml"/><item><title>Rust Sized Trait与类型大小</title><link>https://blog.linxy.dev/rust-sized-type/</link><pubDate>Mon, 24 Aug 2020 11:25:32 +0800</pubDate><author><name>linxy</name></author><guid>https://blog.linxy.dev/rust-sized-type/</guid><description>&lt;p>这篇文章来自于Github的一篇关于&lt;a href="https://github.com/pretzelhammer/rust-blog/blob/master/posts/sizedness-in-rust.md" target="_blank" rel="noopener noreferrer">Rust size&lt;/a>的一些介绍，本文内容基本上是这文章的总结。可以话尽量看原文。&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Rust on linxy&#39;s blog</title>
+    <link>https://linxy.dev/tags/rust/</link>
+    <description>Recent content in Rust on linxy&#39;s blog</description>
+    <image>
+      <title>linxy&#39;s blog</title>
+      <url>https://linxy.dev/images/papermod-cover.png</url>
+      <link>https://linxy.dev/images/papermod-cover.png</link>
+    </image>
+    <generator>Hugo -- 0.145.0</generator>
+    <language>en</language>
+    <copyright>linxy&amp;rsquo;s blog</copyright>
+    <lastBuildDate>Thu, 10 Apr 2025 17:25:14 +0800</lastBuildDate>
+    <atom:link href="https://linxy.dev/tags/rust/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Rust Atomic 笔记</title>
+      <link>https://linxy.dev/posts/rust-atomic/</link>
+      <pubDate>Thu, 10 Apr 2025 17:25:14 +0800</pubDate>
+      <guid>https://linxy.dev/posts/rust-atomic/</guid>
+      <description>&lt;h1 id=&#34;basic-of-rust-concurrency&#34;&gt;basic of rust concurrency&lt;/h1&gt;
+&lt;p&gt;内部可变性是指可以通一个不可变引用来实现对内部数据的修改。标准库中有&lt;code&gt;Cell&amp;lt;T&amp;gt;&lt;/code&gt;，Cell相当于持有这个Obj，要做修改只能先把T move出来再把T塞回去。&lt;code&gt;RefCell&amp;lt;T&amp;gt;&lt;/code&gt;不但持有这个obj，还会维护一个引用计数，如果在运行时有多个Mut借用时，会panic。&lt;br&gt;
+&lt;code&gt;RwLock&lt;/code&gt;是多线程版本的&lt;code&gt;RefCell&lt;/code&gt;，但是多个可变借用时，或者说多个写时，会block住试图拿这个可变借用的线程，让它进入sleep。而&lt;code&gt;Mutex&lt;/code&gt;不像Rwlock可以实现多个可读借用，mutex是彻底的独占的，其它线程都必须等待锁的释放。&lt;br&gt;
+&lt;code&gt;UnSafeCell&lt;/code&gt;是实现内部可变性的关键类型，它只有get函数可以得到一个底层类型的raw pointer,&lt;code&gt;UnsafeCell&lt;/code&gt;没有任何保证安全性的限制，需要用户自己来进行安全性的保证。一般不会直接用unsafe cell，都是包装成另一个类型来限制使用，比如实现成cell或者mutex。&lt;br&gt;
+&lt;code&gt;Send&lt;/code&gt;trait意味着这个类型的所有权可以在线程之间转移，&lt;code&gt;Sync&lt;/code&gt;trait意味着这个类型可以在线程之间共享。&lt;br&gt;
+一个struct如果所有的类型都是send和sync，那它本身也是send和sync的，如果要实现非send和sync的话，可以用phontomdata 标记类型。PhantomData用于标记Struct非sync，毕竟这是个zero sized type。&lt;br&gt;
+给一些非auto trait实现send和sync是unsafe的，因为取决于其中类型的具体实现，所以安全性需要自己来保证。&lt;br&gt;
+rust的mutex，实现了一个其它线程如果持有了mutex，但是panic了，这个mutex就是poison的机制：&lt;a href=&#34;https://doc.rust-lang.org/std/sync/struct.Mutex.html#poisoning&#34;&gt;rust mutex doc&lt;/a&gt;。
+mutex一些值得注意的点:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;if let的scope。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-rust&#34; data-lang=&#34;rust&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;kd&#34;&gt;let&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;Some&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;item&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;list&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;lock&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;().&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;unwrap&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;().&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;pop&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;//会lock到这个if结束
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;process_item&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;item&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;);&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;list&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;lock&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;().&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;unwrap&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;().&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;pop&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;==&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;Some&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;//在进入body前，MutxGuard就已经drop掉了。
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;do_something&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;();&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;rust 2024做出的一个if let的小修改，即if let的表达式生命周期不会延长到else body中去：&lt;a href=&#34;https://doc.rust-lang.org/edition-guide/rust-2024/temporary-if-let-scope.html&#34;&gt;rust 2024 doc&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;大多数的读写锁的实现都会block新的读者出现，当写者等待时，因为可能会多个读者共享导致写者一直要等待，这是读写锁中一个经典的饥饿问题。
+## parking and condition variables
+当一个线程在等待别的线程的通知的时候，这种叫thread parking，parking的时候，线程会进入睡眠，唤醒可以用unpark。
+在实现上，unpark有一个很重要的特性是，有一个信号保留机制，即unpark在park之前执行了，这个park也不会让线程进入睡眠，因为消费者需要对生产者的每一个unpark都有响应，否则会有丢数据的风险。
+但是unpark并不能叠加，所以unpark两次后，再Park两次还是会线程进入睡眠。&lt;/p&gt;
+&lt;p&gt;条件变量一般是与mutex结合使用，传入同一个mutex，一个线程wait，一个线程notify。如果两个线程在操作同一个条件变量但是不同的mutex，会引起panic.&lt;/p&gt;
+&lt;h1 id=&#34;atomic-and-memory-order&#34;&gt;Atomic and Memory order&lt;/h1&gt;
+&lt;p&gt;原子类型可以在多线程间安全的访问和修改，但是依赖于Memory Ordering。比如最简单的order,Ralex,Relax只能保证单个变量的一致性，而多个变量间顺序无法保证。
+atomic i32的溢出是回环的，不像普通的i32，溢出是会panic的。
+为什么需要memory order?CPU会为了优化而把程序中的指令进行重排，写的是什么顺序，执行起来可能是别的顺序。
+Happens before即保证A发生在B之前，但是在多线程中却是不一定的，使用锁可以保证，或者更严格的memory ordering。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Rust Sized Trait与类型大小</title>
+      <link>https://linxy.dev/posts/rust-sized-type/</link>
+      <pubDate>Mon, 24 Aug 2020 11:25:32 +0800</pubDate>
+      <guid>https://linxy.dev/posts/rust-sized-type/</guid>
+      <description>&lt;p&gt;这篇文章来自于Github的一篇关于&lt;a href=&#34;https://github.com/pretzelhammer/rust-blog/blob/master/posts/sizedness-in-rust.md&#34;&gt;Rust size&lt;/a&gt;的一些介绍，本文内容基本上是这文章的总结。可以话尽量看原文。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

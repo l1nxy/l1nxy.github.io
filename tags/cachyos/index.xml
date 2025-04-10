@@ -1,3 +1,27 @@
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>CachyOS - 标签 - linxy's Blog</title><link>https://blog.linxy.dev/tags/cachyos/</link><description>CachyOS - 标签 - linxy's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>linxy_zy@outlook.com (linxy)</managingEditor><webMaster>linxy_zy@outlook.com (linxy)</webMaster><lastBuildDate>Thu, 05 Oct 2023 23:51:52 +0800</lastBuildDate><atom:link href="https://blog.linxy.dev/tags/cachyos/" rel="self" type="application/rss+xml"/><item><title>systemd-boot添加Windows引导项</title><link>https://blog.linxy.dev/systemd-boot-windows/</link><pubDate>Thu, 05 Oct 2023 23:51:52 +0800</pubDate><author><name>linxy</name></author><guid>https://blog.linxy.dev/systemd-boot-windows/</guid><description><![CDATA[<h1 id="前言" class="headerLink">
-    <a href="#%e5%89%8d%e8%a8%80" class="header-mark"></a>前言</h1><p>最近把系统换成了CachyOS，用上了ZFS，这个发行版做的一些Tricky还是可以的，例如一些fish的脚本，还有软件与DE的自定义项都比较简洁，比ArcoLinux强上不少。<br>
-我的情况是有两块NVMe的硬盘，一块是Windows系统，一块则是CachyOS。我的期望是用Linux Boot Manager去引导两个操作系统，比用Windows Boot Manager去引导Linux要好操作不少。</p>]]></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>CachyOS on linxy&#39;s blog</title>
+    <link>https://linxy.dev/tags/cachyos/</link>
+    <description>Recent content in CachyOS on linxy&#39;s blog</description>
+    <image>
+      <title>linxy&#39;s blog</title>
+      <url>https://linxy.dev/images/papermod-cover.png</url>
+      <link>https://linxy.dev/images/papermod-cover.png</link>
+    </image>
+    <generator>Hugo -- 0.145.0</generator>
+    <language>en</language>
+    <copyright>linxy&amp;rsquo;s blog</copyright>
+    <lastBuildDate>Thu, 05 Oct 2023 23:51:52 +0800</lastBuildDate>
+    <atom:link href="https://linxy.dev/tags/cachyos/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>systemd-boot添加Windows引导项</title>
+      <link>https://linxy.dev/posts/systemd-boot-windows/</link>
+      <pubDate>Thu, 05 Oct 2023 23:51:52 +0800</pubDate>
+      <guid>https://linxy.dev/posts/systemd-boot-windows/</guid>
+      <description>&lt;h1 id=&#34;前言&#34;&gt;前言&lt;/h1&gt;
+&lt;p&gt;最近把系统换成了CachyOS，用上了ZFS，这个发行版做的一些Tricky还是可以的，例如一些fish的脚本，还有软件与DE的自定义项都比较简洁，比ArcoLinux强上不少。&lt;br&gt;
+我的情况是有两块NVMe的硬盘，一块是Windows系统，一块则是CachyOS。我的期望是用Linux Boot Manager去引导两个操作系统，比用Windows Boot Manager去引导Linux要好操作不少。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
