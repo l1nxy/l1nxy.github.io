@@ -66,7 +66,7 @@
 &lt;li&gt;笔记软件：我用的Obsidian，同步使用的坚果云。使用了一个小而美的配置，而不多折腾，也没用很多插件。笔记软件要写起来最重要。但是这套同步不能在手机上用，一些要同步的笔记我就往flomo上写了。&lt;/li&gt;
 &lt;li&gt;TODO软件：滴答清单在aur上也有打包，而且使用体验感也很不错，与其它平台的并没有什么不一样。之前仔细研究过，好像滴答清单每一个平台的UI都是一样的，但是使用的技术却不是一样的，比如iOS与Windows，还有Web，感觉并不是使用的跨平台框架来实现的，而是多个平台使用了同一套UI，然后写了不同的代码。&lt;/li&gt;
 &lt;li&gt;Office：可以用WPS，基本做到了开箱即用，但是复杂的文档还是会与Office套件有差距。&lt;/li&gt;
-&lt;li&gt;录屏：录简单的gif可以用&lt;a href=&#34;https://github.com/ShareX/ShareX&#34;&gt;Sharex&lt;/a&gt;, 大的用OBS吧。&lt;/li&gt;
+&lt;li&gt;录屏：用OBS吧。&lt;/li&gt;
 &lt;li&gt;输入法：Fcitx-5，这个看&lt;a href=&#34;https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland&#34;&gt;文档&lt;/a&gt;就可以配置好的，主要是中文输入法+Wayland，并不是开箱就能用的。&lt;/li&gt;
 &lt;li&gt;阅读：有Web版本的微信读书，可以全平台同步。如果要使用软件，可以使用&lt;a href=&#34;https://github.com/readest/readest&#34;&gt;Readest&lt;/a&gt;, 同样是全平台同步，而且自定义的选项多，配合lxgw字体，阅读体验很不错。&lt;/li&gt;
 &lt;/ul&gt;
